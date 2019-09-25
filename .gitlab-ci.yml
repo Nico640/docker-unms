@@ -5,5 +5,5 @@ build:
   stage: build
   script:
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA -f Dockerfile.armhf .
-    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:armhf
-    - docker push $CI_REGISTRY_IMAGE:armhf
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:${CI_COMMIT_TAG}-armhf
+    - docker push $CI_REGISTRY_IMAGE:${CI_COMMIT_TAG}-armhf
