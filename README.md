@@ -27,6 +27,10 @@ This image will also allow you to run [UISP](https://uisp.ui.com/) on a Raspberr
 docker run -d --name unms -p 80:80 -p 443:443 -p 2055:2055/udp -v </path/to/config>:/config nico640/docker-unms:latest
 ```
 
+You can deploy this project to a new balenaCloud application in one click using the button below:
+
+[![](https://balena.io/deploy.svg)](https://dashboard.balena-cloud.com/deploy?repoUrl=https://github.com/Nico640/docker-unms)
+
 ## Parameters
 
 The parameters are split into two halves, separated by a colon, the left hand side representing the host and the right the container side.
