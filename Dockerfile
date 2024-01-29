@@ -4,7 +4,7 @@ FROM --platform=linux/amd64 ubnt/unms-netflow:2.3.57 as unms-netflow
 FROM --platform=linux/amd64 ubnt/unms-crm:4.3.6 as unms-crm
 FROM --platform=linux/amd64 ubnt/unms-siridb:2.3.57 as unms-siridb
 FROM --platform=linux/amd64 ubnt/unms-postgres:2.3.57 as unms-postgres
-FROM rabbitmq:3.7.28-alpine as rabbitmq
+FROM rabbitmq:3.12.12-alpine as rabbitmq
 FROM node:12.18.4-alpine3.12 as node-old
 
 FROM nico640/s6-alpine-node:16.20.0-3.17
@@ -274,8 +274,8 @@ RUN set -x \
 COPY --from=rabbitmq /var/lib/rabbitmq/ /var/lib/rabbitmq/
 COPY --from=rabbitmq /etc/rabbitmq/ /etc/rabbitmq/
 COPY --from=rabbitmq /opt/rabbitmq/ /opt/rabbitmq/
-COPY --from=rabbitmq /usr/local/lib/erlang/ /usr/local/lib/erlang/
-COPY --from=rabbitmq /usr/local/bin/ct_run /usr/local/bin/dialyzer /usr/local/bin/e* /usr/local/bin/run_erl /usr/local/bin/t* /usr/local/bin/
+COPY --from=rabbitmq /opt/erlang/ /opt/erlang/
+COPY --from=rabbitmq /opt/erlang/bin/* /usr/local/bin/
 # end rabbitmq #
 
 # temp fix until s6 services have been migrated to s6-rc
