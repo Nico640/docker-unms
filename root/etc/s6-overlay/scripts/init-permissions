@@ -8,4 +8,4 @@ chown -R unms:unms /config
 chown -R unms:unms /data
 chown unms:unms /home/app
 chown unms:unms /var/log/rabbitmq
-chmod -R 0644 /etc/logrotate.d
+chmod -R 0644 /etc/logrotate.d || true #128
