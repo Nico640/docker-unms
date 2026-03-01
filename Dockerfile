@@ -1,9 +1,9 @@
-FROM --platform=linux/amd64 ubnt/unms:3.0.151 as unms
-FROM --platform=linux/amd64 ubnt/unms-nginx:3.0.151 as unms-nginx
-FROM --platform=linux/amd64 ubnt/unms-netflow:3.0.151 as unms-netflow
-FROM --platform=linux/amd64 ubnt/unms-crm:4.5.32 as unms-crm
-FROM --platform=linux/amd64 ubnt/unms-siridb:3.0.151 as unms-siridb
-FROM --platform=linux/amd64 ubnt/unms-postgres:3.0.151 as unms-postgres
+FROM --platform=linux/amd64 ubnt/unms:3.0.159 as unms
+FROM --platform=linux/amd64 ubnt/unms-nginx:3.0.159 as unms-nginx
+FROM --platform=linux/amd64 ubnt/unms-netflow:3.0.159 as unms-netflow
+FROM --platform=linux/amd64 ubnt/unms-crm:4.5.33 as unms-crm
+FROM --platform=linux/amd64 ubnt/unms-siridb:3.0.159 as unms-siridb
+FROM --platform=linux/amd64 ubnt/unms-postgres:3.0.159 as unms-postgres
 FROM rabbitmq:3.7.28-alpine as rabbitmq
 FROM timescale/timescaledb:2.18.2-pg17 as timescaledb
 
@@ -106,7 +106,7 @@ RUN grep -lr "nginx:nginx" /usr/src/ucrm/ | xargs sed -i 's/nginx:nginx/unms:unm
 # end unms-crm #
 
 # start openresty #
-ENV OPEN_RESTY_VERSION=openresty-1.21.4.2
+ENV OPEN_RESTY_VERSION=openresty-1.25.3.2
 
 WORKDIR /tmp/src
 
@@ -169,28 +169,25 @@ RUN chmod +x /entrypoint.sh /refresh-certificate.sh /refresh-configuration.sh /i
 # end openresty #
 
 # start php #
-ENV PHP_VERSION=php-8.1.33
+ENV PHP_VERSION=php-8.1.34
 
 WORKDIR /tmp/src
 
 RUN set -x \
     && apk add --no-cache --virtual .build-deps autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c gnu-libiconv-dev \
-       argon2-dev coreutils curl-dev libsodium-dev libxml2-dev linux-headers oniguruma-dev openssl-dev readline-dev sqlite-dev patch patchutils \
+       argon2-dev coreutils curl-dev libsodium-dev libxml2-dev linux-headers oniguruma-dev openssl-dev readline-dev sqlite-dev patch \
     && curl -SL https://www.php.net/get/${PHP_VERSION}.tar.xz/from/this/mirror -o php.tar.xz \
     && tar -xvf php.tar.xz \
     && cp php.tar.xz /usr/src \
-    && export CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
-    && export CPPFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" \
+    && export CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Wno-incompatible-pointer-types" \
+    && export CPPFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Wno-incompatible-pointer-types" \
     && export LDFLAGS="-Wl,-O1 -pie" \
     && cd /tmp/src/${PHP_VERSION} \
     && curl -fL 'https://github.com/php/php-src/commit/577b8ae4226368e66fee7a9b5c58f9e2428372fc.patch?full_index=1' -o 11678.patch \
 	&& echo '6edc20c3bb3e7cc13515abce7f2fffa8ebea6cf7469abfbc78fcdc120350b239 *11678.patch' | sha256sum -c - \
 	&& patch -p1 < 11678.patch \
 	&& rm 11678.patch \
-	&& curl -fL 'https://github.com/php/php-src/commit/67259e451d5d58b4842776c5696a66d74e157609.patch?full_index=1' -o 14834.patch \
-	&& echo 'ed10a1b254091ad676ed204e55628ecbd6c8962004d6185a1821cedecd526c0f *14834.patch' | sha256sum -c - \
-	&& filterdiff -x '*/NEWS' 14834.patch | patch -p1 \
-	&& rm 14834.patch \
+    && sed -i 's/parser->parser->instate != XML_PARSER_ENTITY_VALUE && parser->parser->instate != XML_PARSER_ATTRIBUTE_VALUE/parser->parser->instate == XML_PARSER_CONTENT/' ext/xml/compat.c \
     && ./configure \
         --with-config-file-path="/usr/local/etc/php" \
         --with-config-file-scan-dir="/usr/local/etc/php/conf.d" \
@@ -263,7 +260,7 @@ RUN apk add --no-cache --virtual .build-deps autoconf dpkg-dev dpkg file g++ gcc
 # start siridb #
 COPY --from=unms-siridb /etc/siridb/siridb.conf /etc/siridb/siridb.conf
 
-ENV SIRIDB_VERSION=2.0.51
+ENV SIRIDB_VERSION=2.0.53
 
 RUN set -x \
     && [ $TARGETARCH = "arm" ] && export LIBCLERI_VERSION=0.12.2 || export LIBCLERI_VERSION=1.0.2 \
