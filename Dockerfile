@@ -292,7 +292,8 @@ ENV PATH=$PATH:/home/app/unms/node_modules/.bin:/opt/rabbitmq/sbin:/usr/local/op
     PUBLIC_HTTPS_PORT=443 \
     PUBLIC_WS_PORT=443 \
     HTTP_PORT=80 \
-    HTTPS_PORT=443
+    HTTPS_PORT=443 \
+    S6_SERVICES_GRACETIME=60000
 
 EXPOSE 80 443 2055/udp
 
