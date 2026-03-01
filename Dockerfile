@@ -106,7 +106,7 @@ RUN grep -lr "nginx:nginx" /usr/src/ucrm/ | xargs sed -i 's/nginx:nginx/unms:unm
 # end unms-crm #
 
 # start openresty #
-ENV OPEN_RESTY_VERSION=openresty-1.25.3.2
+ENV OPEN_RESTY_VERSION=openresty-1.27.1.2
 
 WORKDIR /tmp/src
 
