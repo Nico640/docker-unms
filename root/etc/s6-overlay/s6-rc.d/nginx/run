@@ -22,4 +22,4 @@ cd /
 # Fix permissions
 chown -R unms:unms /cert /config/cert
 
-s6-setuidgid root /usr/local/openresty/bin/openresty -g "daemon off;"
+exec s6-setuidgid root /usr/local/openresty/bin/openresty -g "daemon off;"

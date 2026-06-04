@@ -7,4 +7,4 @@ export PATH=$PATH:/opt/rabbitmq/sbin
 [ $(ulimit -n) -gt 65536 ] && ulimit -n 65536
 
 echo "Starting rabbitmq-server..."
-s6-setuidgid unms rabbitmq-server
+exec s6-setuidgid unms rabbitmq-server

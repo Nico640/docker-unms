@@ -45,4 +45,4 @@ if [ -f "${PGDATA}/PG_VERSION" ] && [ $(cat "${PGDATA}/PG_VERSION" || echo "") =
   fi
 fi
 
-s6-setuidgid unms postgres
+exec s6-setuidgid unms postgres

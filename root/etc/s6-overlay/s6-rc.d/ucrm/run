@@ -56,11 +56,11 @@ done
 if [ "$QUIET_MODE" = "1" ]; then
   echo "Starting UCRM in quiet mode..."
   cd /usr/src/ucrm
-  s6-setuidgid root make server_with_migrate >> /config/unms/logs/ucrm.log 2>&1
+  exec s6-setuidgid root make server_with_migrate >> /config/unms/logs/ucrm.log 2>&1
 
   printf "\n\nUCRM exited, last 100 lines of log:\n\n"
   tail -n 100 /config/unms/logs/ucrm.log
 else
   cd /usr/src/ucrm
-  s6-setuidgid root make server_with_migrate 2>&1  | tee -a /config/unms/logs/ucrm.log
+  exec s6-setuidgid root make server_with_migrate 2>&1  | tee -a /config/unms/logs/ucrm.log
 fi

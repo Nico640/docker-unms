@@ -35,11 +35,11 @@ export UNMS_API_HOST=localhost
 if [ "$QUIET_MODE" = "1" ]; then
   echo "Starting UNMS device-ws in quiet mode..."
   cd /home/app/unms
-  s6-setuidgid unms docker-entrypoint.sh device-ws.sh >> /config/unms/logs/unms-device-ws.log 2>&1
+  exec s6-setuidgid unms docker-entrypoint.sh device-ws.sh >> /config/unms/logs/unms-device-ws.log 2>&1
 
   printf "\n\nUNMS device-ws exited, last 100 lines of log:\n\n"
   tail -n 100 /config/unms/logs/unms-device-ws.log
 else
   cd /home/app/unms
-  s6-setuidgid unms docker-entrypoint.sh device-ws.sh 2>&1  | tee -a /config/unms/logs/unms-device-ws.log
+  exec s6-setuidgid unms docker-entrypoint.sh device-ws.sh 2>&1  | tee -a /config/unms/logs/unms-device-ws.log
 fi
