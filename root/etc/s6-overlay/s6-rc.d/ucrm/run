@@ -34,7 +34,7 @@ export NGINX_VERSION=1.14.2
 export PGBOUNCER_VERSION=1.10.0
 export UNMS_HOST=127.0.0.1
 export UNMS_PORT=8081
-export UNMS_VERSION=3.0.159
+export UNMS_VERSION=3.1.65
 export SUSPEND_PORT=9082
 export CLOUD=0
 export CLOUD_SMTP_PORT=null
@@ -45,6 +45,8 @@ export CLOUD_SMTP_TLS_ALLOW_UNAUTHORIZED=null
 export CLOUD_SMTP_SECURITY_MODE=null
 export CLOUD_MAPS_API_KEY=null
 export NODE_ENV=production
+export CLOUD_MAPS_API_PROXY_URL=https://maps.googleapis.com
+export CLOUD_PLACES_API_PROXY_URL=https://places.googleapis.com
 . /sharedenv
 
 # wait for postgres to come up

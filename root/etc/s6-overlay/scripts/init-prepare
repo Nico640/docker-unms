@@ -20,7 +20,8 @@ ln -s /config/siridb /var/lib/siridb
 [ -f /sharedenv ] || (echo "export UNMS_TOKEN=$(LC_CTYPE=C tr -dc "a-zA-Z0-9" < /dev/urandom | fold -w 48 | head -n 1 || true)" > /sharedenv \
 && echo "export SECRET=$(LC_CTYPE=C tr -dc "a-zA-Z0-9" < /dev/urandom | fold -w 48 | head -n 1 || true)" >> /sharedenv \
 && echo "export SECURE_LINK_SECRET=$(LC_CTYPE=C tr -dc "a-zA-Z0-9" < /dev/urandom | fold -w 100 | head -n 1 || true)" >> /sharedenv \
-&& echo "export UNMS_CLI_TOKEN=$(LC_CTYPE=C tr -dc "a-zA-Z0-9" < /dev/urandom | fold -w 48 | head -n 1 || true)" >> /sharedenv)
+&& echo "export UNMS_CLI_TOKEN=$(LC_CTYPE=C tr -dc "a-zA-Z0-9" < /dev/urandom | fold -w 48 | head -n 1 || true)" >> /sharedenv \
+&& echo "export NGINX_API_SECRET=$(LC_CTYPE=C tr -dc "a-zA-Z0-9" < /dev/urandom | fold -w 100 | head -n 1 || true)" >> /sharedenv)
 ln -s /config/unms /home/app/unms/data
 
 # UCRM

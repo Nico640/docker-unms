@@ -1,13 +1,13 @@
-FROM --platform=linux/amd64 ubnt/unms:3.0.159 as unms
-FROM --platform=linux/amd64 ubnt/unms-nginx:3.0.159 as unms-nginx
-FROM --platform=linux/amd64 ubnt/unms-netflow:3.0.159 as unms-netflow
-FROM --platform=linux/amd64 ubnt/unms-crm:4.5.33 as unms-crm
-FROM --platform=linux/amd64 ubnt/unms-siridb:3.0.159 as unms-siridb
-FROM --platform=linux/amd64 ubnt/unms-postgres:3.0.159 as unms-postgres
+FROM --platform=linux/amd64 ubnt/unms:3.1.65 as unms
+FROM --platform=linux/amd64 ubnt/unms-nginx:3.1.65 as unms-nginx
+FROM --platform=linux/amd64 ubnt/unms-netflow:3.1.65 as unms-netflow
+FROM --platform=linux/amd64 ubnt/unms-crm:4.6.13 as unms-crm
+FROM --platform=linux/amd64 ubnt/unms-siridb:3.1.65 as unms-siridb
+FROM --platform=linux/amd64 ubnt/unms-postgres:3.1.65 as unms-postgres
 FROM rabbitmq:3.7.28-alpine as rabbitmq
 FROM timescale/timescaledb:2.18.2-pg17 as timescaledb
 
-FROM nico640/s6-alpine-node:20.18.3-3.21
+FROM nico640/s6-alpine-node:22.22.0-3.23
 ARG TARGETARCH
 
 # base deps postgres 17, certbot
@@ -16,18 +16,12 @@ RUN set -x \
     && apk add --no-cache certbot gzip bash vim dumb-init openssl libcap sudo \
        pcre pcre2 yajl gettext coreutils make argon2-libs jq tar xz \
        libzip gmp icu c-client supervisor libuv su-exec gnu-libiconv git libsodium \
-       postgresql17 postgresql17-client postgresql17-contrib libpng libwebp libjpeg-turbo freetype glib
+       postgresql17 postgresql17-client postgresql17-contrib libpng libwebp libjpeg-turbo \
+       freetype glib
 
 COPY --from=timescaledb /usr/local/lib/postgresql/timescaledb* /usr/lib/postgresql17/
 COPY --from=timescaledb /usr/local/share/postgresql/extension/timescaledb* /usr/share/postgresql17/extension/
 RUN echo "shared_preload_libraries = 'timescaledb'" >> /usr/share/postgresql17/postgresql.conf.sample
-
-# temporarily include postgres 13 because it is needed for migration from older versions
-WORKDIR /postgres/13
-RUN cp /etc/apk/repositories /etc/apk/repositories_temp \
-    && echo "https://dl-cdn.alpinelinux.org/alpine/v3.19/community" > /etc/apk/repositories \
-    && apk fetch --root / --arch ${APK_ARCH} --no-cache -U postgresql13 postgresql13-contrib -o /postgres \
-    && mv /etc/apk/repositories_temp /etc/apk/repositories
 
 # start unms #
 WORKDIR /home/app/unms
@@ -106,11 +100,12 @@ RUN grep -lr "nginx:nginx" /usr/src/ucrm/ | xargs sed -i 's/nginx:nginx/unms:unm
 # end unms-crm #
 
 # start openresty #
-ENV OPEN_RESTY_VERSION=openresty-1.27.1.2
+ENV OPEN_RESTY_VERSION=openresty-1.29.2.5
 
 WORKDIR /tmp/src
 
 RUN apk add --no-cache --virtual .build-deps gcc g++ pcre-dev openssl-dev zlib-dev perl ccache \
+    libxslt-dev gd-dev geoip-dev linux-headers \
     && export CC="ccache gcc -fdiagnostics-color=always -g3" \
     && curl -SL https://openresty.org/download/${OPEN_RESTY_VERSION}.tar.gz | tar xvz \
     && cd /tmp/src/${OPEN_RESTY_VERSION} && ./configure \
@@ -118,30 +113,41 @@ RUN apk add --no-cache --virtual .build-deps gcc g++ pcre-dev openssl-dev zlib-d
         --with-cc='ccache gcc -fdiagnostics-color=always -g3' \
         --with-cc-opt="-DNGX_LUA_ABORT_AT_PANIC" \
         --with-pcre-jit \
+        --with-compat \
         --without-http_rds_json_module \
         --without-http_rds_csv_module \
         --without-lua_rds_parser \
-        --with-stream \
-        --with-stream_ssl_module \
-        --with-stream_ssl_preread_module \
-        --with-http_v2_module \
         --without-mail_pop3_module \
         --without-mail_imap_module \
         --without-mail_smtp_module \
-        --with-http_stub_status_module \
-        --with-http_realip_module \
-        --with-http_addition_module \
+        --with-http_addition_module \   
         --with-http_auth_request_module \
-        --with-http_secure_link_module \
-        --with-http_random_index_module \
-        --with-http_gzip_static_module \
-        --with-http_sub_module \
         --with-http_dav_module \
         --with-http_flv_module \
-        --with-http_mp4_module \
+        --with-http_geoip_module=dynamic \
         --with-http_gunzip_module \
+        --with-http_gzip_static_module \
+        --with-http_image_filter_module=dynamic \
+        --with-http_mp4_module \
+        --with-http_random_index_module \
+        --with-http_realip_module \
+        --with-http_secure_link_module \
+        --with-http_slice_module \
+        --with-http_ssl_module \
+        --with-http_stub_status_module \
+        --with-http_sub_module \
+        --with-http_v2_module \
+        --with-http_v3_module \
+        --with-http_xslt_module=dynamic \
+        --with-ipv6 \
+        --with-mail \
+        --with-mail_ssl_module \
+        --with-md5-asm \
+        --with-sha1-asm \
+        --with-stream \
+        --with-stream_ssl_module \
+        --with-stream_ssl_preread_module \
         --with-threads \
-        --with-compat \
         --with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT' \
         -j$(nproc) \
     && make -j$(nproc) \
@@ -169,25 +175,20 @@ RUN chmod +x /entrypoint.sh /refresh-certificate.sh /refresh-configuration.sh /i
 # end openresty #
 
 # start php #
-ENV PHP_VERSION=php-8.1.34
+ENV PHP_VERSION=php-8.3.32
 
 WORKDIR /tmp/src
 
 RUN set -x \
     && apk add --no-cache --virtual .build-deps autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c gnu-libiconv-dev \
        argon2-dev coreutils curl-dev libsodium-dev libxml2-dev linux-headers oniguruma-dev openssl-dev readline-dev sqlite-dev patch \
-    && curl -SL https://www.php.net/get/${PHP_VERSION}.tar.xz/from/this/mirror -o php.tar.xz \
+    && curl -SL https://www.php.net/distributions/${PHP_VERSION}.tar.xz -o php.tar.xz \
     && tar -xvf php.tar.xz \
     && cp php.tar.xz /usr/src \
     && export CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Wno-incompatible-pointer-types" \
     && export CPPFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -Wno-incompatible-pointer-types" \
     && export LDFLAGS="-Wl,-O1 -pie" \
     && cd /tmp/src/${PHP_VERSION} \
-    && curl -fL 'https://github.com/php/php-src/commit/577b8ae4226368e66fee7a9b5c58f9e2428372fc.patch?full_index=1' -o 11678.patch \
-	&& echo '6edc20c3bb3e7cc13515abce7f2fffa8ebea6cf7469abfbc78fcdc120350b239 *11678.patch' | sha256sum -c - \
-	&& patch -p1 < 11678.patch \
-	&& rm 11678.patch \
-    && sed -i 's/parser->parser->instate != XML_PARSER_ENTITY_VALUE && parser->parser->instate != XML_PARSER_ATTRIBUTE_VALUE/parser->parser->instate == XML_PARSER_CONTENT/' ext/xml/compat.c \
     && ./configure \
         --with-config-file-path="/usr/local/etc/php" \
         --with-config-file-scan-dir="/usr/local/etc/php/conf.d" \
@@ -228,12 +229,12 @@ COPY --from=unms-crm /usr/local/etc/php-fpm.conf /usr/local/etc/
 COPY --from=unms-crm /usr/local/etc/php-fpm.d /usr/local/etc/php-fpm.d
 
 RUN apk add --no-cache --virtual .build-deps autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c \
-    bzip2-dev freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev libzip-dev gmp-dev icu-dev \
+    bzip2-dev freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev libzip-dev gmp-dev icu-dev linux-headers  \
     libxml2-dev postgresql17-dev \
     && docker-php-source extract \
     && cd /usr/src/php \
     && pecl channel-update pecl.php.net \
-    && echo '' | pecl install apcu ds \
+    && echo '' | pecl install apcu ds-1.8.0 \
     && docker-php-ext-enable apcu ds sodium \
     && docker-php-ext-configure gd \
         --enable-gd \
