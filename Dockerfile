@@ -1,13 +1,13 @@
-FROM --platform=linux/amd64 ubnt/unms:3.1.65 as unms
-FROM --platform=linux/amd64 ubnt/unms-nginx:3.1.65 as unms-nginx
-FROM --platform=linux/amd64 ubnt/unms-netflow:3.1.65 as unms-netflow
-FROM --platform=linux/amd64 ubnt/unms-crm:4.6.13 as unms-crm
-FROM --platform=linux/amd64 ubnt/unms-siridb:3.1.65 as unms-siridb
-FROM --platform=linux/amd64 ubnt/unms-postgres:3.1.65 as unms-postgres
+FROM --platform=linux/amd64 ubnt/unms:3.1.69 as unms
+FROM --platform=linux/amd64 ubnt/unms-nginx:3.1.69 as unms-nginx
+FROM --platform=linux/amd64 ubnt/unms-netflow:3.1.69 as unms-netflow
+FROM --platform=linux/amd64 ubnt/unms-crm:4.6.16 as unms-crm
+FROM --platform=linux/amd64 ubnt/unms-siridb:3.1.69 as unms-siridb
+FROM --platform=linux/amd64 ubnt/unms-postgres:3.1.69 as unms-postgres
 FROM rabbitmq:3.7.28-alpine as rabbitmq
 FROM timescale/timescaledb:2.18.2-pg17 as timescaledb
 
-FROM nico640/s6-alpine-node:22.22.0-3.23
+FROM nico640/s6-alpine-node:22.23.4-3.23
 ARG TARGETARCH
 
 # base deps postgres 17, certbot
