@@ -1,11 +1,22 @@
-FROM --platform=linux/amd64 ubnt/unms:3.1.70 as unms
-FROM --platform=linux/amd64 ubnt/unms-nginx:3.1.70 as unms-nginx
-FROM --platform=linux/amd64 ubnt/unms-netflow:3.1.70 as unms-netflow
-FROM --platform=linux/amd64 ubnt/unms-crm:4.6.17 as unms-crm
-FROM --platform=linux/amd64 ubnt/unms-siridb:3.1.70 as unms-siridb
-FROM --platform=linux/amd64 ubnt/unms-postgres:3.1.70 as unms-postgres
+FROM --platform=linux/amd64 ubnt/unms:3.1.73 as unms
+FROM --platform=linux/amd64 ubnt/unms-nginx:3.1.73 as unms-nginx
+FROM --platform=linux/amd64 ubnt/unms-netflow:3.1.73 as unms-netflow
+FROM --platform=linux/amd64 ubnt/unms-crm:4.6.20 as unms-crm
+FROM --platform=linux/amd64 ubnt/unms-siridb:3.1.73 as unms-siridb
+FROM --platform=linux/amd64 ubnt/unms-postgres:3.1.73 as unms-postgres
 FROM rabbitmq:3.7.28-alpine as rabbitmq
 FROM timescale/timescaledb:2.18.2-pg17 as timescaledb
+
+# TimescaleDB 2.18.2 with the upstream fix for postgresql17 >= 17.12 (timescale/timescaledb#11038)
+FROM nico640/s6-alpine-node:22.23.4-3.23 as timescaledb-build
+COPY patches/timescaledb-2.18.2-portal-status.patch /tmp/
+RUN set -x \
+    && apk add --no-cache build-base cmake git postgresql17 postgresql17-dev openssl-dev \
+    && git clone --depth 1 --branch 2.18.2 https://github.com/timescale/timescaledb.git /tmp/timescaledb \
+    && git -C /tmp/timescaledb apply /tmp/timescaledb-2.18.2-portal-status.patch \
+    && cmake -S /tmp/timescaledb -B /tmp/timescaledb/build -DPG_CONFIG=/usr/libexec/postgresql17/pg_config \
+       -DREGRESS_CHECKS=OFF -DTAP_CHECKS=OFF -DWARNINGS_AS_ERRORS=OFF -DGENERATE_DOWNGRADE_SCRIPT=OFF \
+    && make -C /tmp/timescaledb/build -j"$(nproc)" install DESTDIR=/out
 
 FROM nico640/s6-alpine-node:22.23.4-3.23
 ARG TARGETARCH
@@ -21,6 +32,7 @@ RUN set -x \
 
 COPY --from=timescaledb /usr/local/lib/postgresql/timescaledb* /usr/lib/postgresql17/
 COPY --from=timescaledb /usr/local/share/postgresql/extension/timescaledb* /usr/share/postgresql17/extension/
+COPY --from=timescaledb-build /out/usr/ /usr/
 RUN echo "shared_preload_libraries = 'timescaledb'" >> /usr/share/postgresql17/postgresql.conf.sample
 
 # start unms #
