@@ -1,0 +1,22 @@
+Backport of the TimescaleDB fix for PostgreSQL 17.12+, which rejects dropping
+portals that are still being set up (timescale/timescaledb#11038). Same change
+as in TimescaleDB 2.27.3, 2.28.5, 2.29.3, 2.30.3, 2.31.2 and 2.32.1.
+
+--- a/tsl/src/bgw_policy/job.c
++++ b/tsl/src/bgw_policy/job.c
+@@ -617,6 +617,7 @@ job_execute(BgwJob *job)
+ 		portal = CreatePortal("", true, true);
+ 		portal->visible = false;
+ 		portal->resowner = CurrentResourceOwner;
++		portal->status = PORTAL_ACTIVE;
+ 		ActivePortal = portal;
+ 		PortalContext = portal->portalContext;
+
+@@ -702,6 +703,7 @@ job_execute(BgwJob *job)
+ 		if (ActiveSnapshotSet())
+ 			PopActiveSnapshot();
+ 		CommitTransactionCommand();
++		MarkPortalDone(portal);
+ 		PortalDrop(portal, false);
+ 		ActivePortal = NULL;
+ 		PortalContext = NULL;
