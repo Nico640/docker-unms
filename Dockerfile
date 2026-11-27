@@ -187,7 +187,7 @@ RUN chmod +x /entrypoint.sh /refresh-certificate.sh /refresh-configuration.sh /i
 # end openresty #
 
 # start php #
-ENV PHP_VERSION=php-8.3.36
+ENV PHP_VERSION=php-8.3.37
 
 WORKDIR /tmp/src
 
